@@ -427,121 +427,124 @@ class StockController extends Controller
             
             $start_time = time();
 
-           
-            if( $this->batch === true )
-            {
-          
-                $chunkSize = 100;
-                $chunkList = array_chunk($priceList,$chunkSize,true);
-                $chunkCount = count($chunkList);
-                $chunkPos = 0;
-               
-                foreach($chunkList as $chuntItem){
-                   
-                    ++$chunkPos;
-                    $currentEle = current($chuntItem);
-                    
-                    Yii::$app->db->createCommand()
-                            ->batchInsert('stock_price',$keys,array_values($chuntItem) )
-                            ->execute();
+            try{
 
-                    echo \Yii::t('app', '插入第( {chunkPos}/{chunktCnt}) )组，每组 {chunkSize}条  股票代码：{symbol}  股票名称：{name}' .PHP_EOL, [
-                            'chunkPos' => $chunkPos,
-                            'chunktCnt'=> $chunkCount,
-                            'chunkSize'=>$chunkSize,
-                            'symbol'=>$currentEle['symbol'],
-                            'name'=> $currentEle['name'],
-                            'date'=>$currentEle['date']
+
+                if( $this->batch === true )
+                {
+            
+                    $chunkSize = 100;
+                    $chunkList = array_chunk($priceList,$chunkSize,true);
+                    $chunkCount = count($chunkList);
+                    $chunkPos = 0;
+                
+                    foreach($chunkList as $chuntItem){
+                    
+                        ++$chunkPos;
+                        $currentEle = current($chuntItem);
+                        
+                        Yii::$app->db->createCommand()
+                                ->batchInsert('stock_price',$keys,array_values($chuntItem) )
+                                ->execute();
+
+                        echo \Yii::t('app', '插入第( {chunkPos}/{chunktCnt}) )组，每组 {chunkSize}条  股票代码：{symbol}  股票名称：{name}' .PHP_EOL, [
+                                'chunkPos' => $chunkPos,
+                                'chunktCnt'=> $chunkCount,
+                                'chunkSize'=>$chunkSize,
+                                'symbol'=>$currentEle['symbol'],
+                                'name'=> $currentEle['name'],
+                                'date'=>$currentEle['date']
+
+                        ]);
+
+                    }
+
+
+                    echo \Yii::t('app', "插入数据 {count} 组，每组 {chunkSize} 条，用时 {spent} s\n" ,[
+                        'count'=>$countPerStock,
+                        'chunkSize'=>$chunkSize,
+                        'spent'=> time() - $start_time
 
                     ]);
 
-                   
+                    
+    
 
                 }
-
-
-                echo \Yii::t('app', "插入数据 {count} 组，每组 {chunkSize} 条，用时 {spent} s\n" ,[
-                    'count'=>$countPerStock,
-                    'chunkSize'=>$chunkSize,
-                    'spent'=> time() - $start_time
-
-                ]);
-
-                
- 
-
-            }
-            else
-            {
-                
-                $insert_num = 0;//插入条数
-                
-                foreach($priceList as $k => $item)
+                else
                 {
-  
-                    $stockPrice = null;
-                  
-
-                    // $stockPrice = StockPrice::find()->limit(1)
-                    //                 ->where([
-                    //                     'symbol'=>$item['symbol'],
-                    //                     'date'=>$item['date']
-                    //                 ])
-                    //                 ->one();
-
                     
-                    if( !$stockPrice )
-                    {
-
-                        $stockPrice = new StockPrice;
-
-                        $stockPrice->attributes = $item;
-
-                        $stockPrice->save();
-
-
-                        echo \Yii::t('app', '插入数据({position}/{count})： 股票代码：{symbol}  股票名称：{name} 日期： {date}' .PHP_EOL, [
-                            'position' => $k+1,
-                            'count'=>$countPerStock,
-                            'symbol'=>$item['symbol'],
-                            'name'=> $item['name'],
-                            'date'=>$item['date']
-
-                        ]);
-
-                        ++$insert_num;
-
-                    }
-                    else
-                    {
-                        echo \Yii::t('app', '已存在数据({position}/{count})： 股票代码：{symbol}  股票名称：{name} 日期： {date}' .PHP_EOL, [
-                            'position' => $k+1,
-                            'count'=>$countPerStock,
-                            'symbol'=>$item['symbol'],
-                            'name'=> $item['name'],
-                            'date'=>$item['date']
-
-                        ]);
-
-                    }
-
-
+                    $insert_num = 0;//插入条数
                     
+                    foreach($priceList as $k => $item)
+                    {
     
+                        $stockPrice = null;
+                    
+
+                        // $stockPrice = StockPrice::find()->limit(1)
+                        //                 ->where([
+                        //                     'symbol'=>$item['symbol'],
+                        //                     'date'=>$item['date']
+                        //                 ])
+                        //                 ->one();
+
+                        
+                        if( !$stockPrice )
+                        {
+
+                            $stockPrice = new StockPrice;
+
+                            $stockPrice->attributes = $item;
+
+                            $stockPrice->save();
+
+
+                            echo \Yii::t('app', '插入数据({position}/{count})： 股票代码：{symbol}  股票名称：{name} 日期： {date}' .PHP_EOL, [
+                                'position' => $k+1,
+                                'count'=>$countPerStock,
+                                'symbol'=>$item['symbol'],
+                                'name'=> $item['name'],
+                                'date'=>$item['date']
+
+                            ]);
+
+                            ++$insert_num;
+
+                        }
+                        else
+                        {
+                            echo \Yii::t('app', '已存在数据({position}/{count})： 股票代码：{symbol}  股票名称：{name} 日期： {date}' .PHP_EOL, [
+                                'position' => $k+1,
+                                'count'=>$countPerStock,
+                                'symbol'=>$item['symbol'],
+                                'name'=> $item['name'],
+                                'date'=>$item['date']
+
+                            ]);
+
+                        }
+
+
+                        
+        
+                    }
+        
+
+                    echo \Yii::t('app', "插入数据 {$insert_num} 条，用时 {spent} s\n" ,[
+                        'count'=>$countPerStock,
+                        'spent'=> time() - $start_time
+
+                    ]);
+
+
                 }
-    
 
-                echo \Yii::t('app', "插入数据 {$insert_num} 条，用时 {spent} s\n" ,[
-                    'count'=>$countPerStock,
-                    'spent'=> time() - $start_time
+            
 
-                ]);
-
-
+            }catch(Exception $e){
+                 Yii::trace($e->getMessage(), __METHOD__);
             }
-
-            
-            
 
            
 
@@ -629,11 +632,11 @@ class StockController extends Controller
     private function convert( $str,$from='GB2312',$to='UTF-8' ){
         
         try{
+
             $result = iconv('GB2312', $to.'//IGNORE', $str );
+
         }catch(Exception $e){
-
-            Yii::trace($e->getMessage(), __METHOD__);
-
+ 
             throw $e;
         }
         

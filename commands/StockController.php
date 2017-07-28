@@ -558,7 +558,7 @@ class StockController extends Controller
         }elseif ( $pre === 'sz' ){
             $prefix = '1';
         }else{
-            throw new \Exception('');
+            throw new \Exception('未知的股票类别 '.$item['code']);
         }
 
 
@@ -585,11 +585,9 @@ class StockController extends Controller
 
         if ($response->isOK) {
 
-            $response->content = iconv('GB2312', 'UTF-8', $response->content );
- 
-            $response->content = explode("\n", $response->content);
+            $response->content = $this->convert( $response->content );
             
-            $_data = array_filter($response->content);
+            $_data = array_filter( explode("\n", $response->content) );
 
         } else {
 
@@ -619,5 +617,26 @@ class StockController extends Controller
 
      
         return $data;
+    }
+
+    /**
+
+    *  修复 PHP Notice 'yii\base\ErrorException' with message 'iconv(): Detected an illegal character in input string' 错误
+
+    * @var mixed
+
+    */
+    private function convert( $str,$from='GB2312',$to='UTF-8' ){
+        
+        try{
+            $result = iconv('GB2312', $to.'//IGNORE', $str );
+        }catch(Exception $e){
+
+            Yii::trace($e->getMessage(), __METHOD__);
+
+            throw $e;
+        }
+        
+
     }
 }
